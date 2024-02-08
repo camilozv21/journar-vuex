@@ -3,21 +3,21 @@ export default () => ({
   isLoading: true,
   entries: [
     {
-      id: new Date().getTime(),
+      id: '1',
       date: new Date().toDateString(),
-      text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      text: 'aLorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       picture: null,
     },
     {
-      id: new Date().getTime() + 1000,
+      id: '2',
       date: new Date().toDateString(),
-      text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      text: 'bLorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       picture: null,
     },
     {
-      id: new Date().getTime() + 2000,
+      id: '3',
       date: new Date().toDateString(),
-      text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+      text: 'cLorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       picture: null,
     },
   ]
