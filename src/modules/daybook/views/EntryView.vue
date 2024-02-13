@@ -11,12 +11,24 @@
       </div>
     
       <div>
-        <button class="btn btn-danger mx-2">
+
+        <input type="file"
+          v-show="false"
+          ref="imageSelector"
+          accept="image/*"
+          @change="selectedImage">
+
+        <button 
+          v-if="entry.id"
+          class="btn btn-danger mx-2"
+          @click="deleteEntryById"
+        >
           Borrar
           <i class="fa fa-trash-alt"></i>
         </button>
     
-        <button class="btn btn-primary">
+        <button class="btn btn-primary"
+          @click="onSelectImage">
           Subir foto
           <i class="fa fa-upload"></i>
         </button>
@@ -35,14 +47,21 @@
   </div>
 
   <img 
+    v-if="entry.picture && !localImage"
     class="img-thumbnail"
-    src="https://okdiario.com/img/viajes/2017/03/01/unnamed-1.jpg" 
+    :src="entry.picture" 
+    alt="entry picture">
+  <img
+    v-if="localImage"
+    class="img-thumbnail"
+    :src="localImage" 
     alt="entry picture">
     
   </template>
 
 <Fab 
   icon="fa-save"
+  @on:click="saveEntry"
 />
 
 </template>
@@ -52,6 +71,9 @@ import { defineAsyncComponent } from 'vue';
 import { mapGetters } from 'vuex'; //computed
 import getDateMonthYear from '../helpers/getDateMonthYear'
 import getDayMonthYear from '../helpers/getDateMonthYear';
+import uploadImage from '../helpers/uploadImage';
+import { mapActions } from 'vuex';
+import Swal from 'sweetalert2'
 
 export default {
   name: 'EntryView',
@@ -67,19 +89,11 @@ export default {
     Fab: defineAsyncComponent(() => import('../components/Fab.vue')),
   },
 
-  methods: {
-    loadEntry() {
-      const entry = this.getEntryById(this.id);
-      
-      if(!entry) return this.$router.push({ name: 'no-entry' });
-      
-      this.entry = entry;
-    }
-  },
-
   data() {
     return {
-      entry: null
+      entry: null,
+      localImage: null,
+      file: null,
     }
   },
 
@@ -96,6 +110,93 @@ export default {
     yearDay() {
       const { yearDay } = getDayMonthYear(this.entry.date);
       return yearDay;
+    }
+  },
+
+  methods: {
+    ...mapActions('journal', ['updateEntry', 'createEntry', 'deleteEntry']),
+
+    loadEntry() {
+      let entry
+
+      if(this.id === 'new') {
+        entry = {
+          text: '',
+          date: new Date().getTime()
+        }
+      } else {
+        entry = this.getEntryById(this.id);
+        if(!entry) return this.$router.push({ name: 'no-entry' });
+      }
+
+      this.entry = entry;
+    },
+
+    async saveEntry() {
+
+      new Swal({
+        title: 'Guardando...',
+        allowOutsideClick: false,
+      });
+      Swal.showLoading();
+
+      const picture = await uploadImage(this.file)
+
+      this.entry.picture = picture;
+
+      if(this.entry.id) {
+        await this.updateEntry(this.entry );
+      } else {
+        const routeId = await this.createEntry(this.entry );
+        this.$router.push({ name: 'entry', params: { id: routeId } });
+      }
+      
+      window.location.reload();
+      this.file = null;
+      Swal.fire('Guardado', 'Entrada registrada con éxito', 'success');
+    },
+    async deleteEntryById() {
+
+      const { isConfirmed } = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: "No podrás revertir esto",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, borrar'
+      })
+
+      if (isConfirmed) {
+        new Swal({
+          title: 'Borrando...',
+          text: 'Espere por favor',
+          allowOutsideClick: false,
+        });
+        Swal.showLoading();
+        await this.deleteEntry({...this.entry});
+        this.$router.push({ name: 'no-entry' });
+
+        Swal.fire('Borrado', 'Entrada eliminada con éxito', 'success');
+      }
+
+    },
+    selectedImage(event) {
+      const file = event.target.files[0];
+      if (!file) {
+        this.localImage = null;
+        this.file = null;
+        return
+      };
+
+      this.file = file;
+
+      const fr = new FileReader();
+      fr.onload = () => this.localImage = fr.result;
+      fr.readAsDataURL(file);
+    },
+    onSelectImage() {
+      this.$refs.imageSelector.click();
     }
   },
 
